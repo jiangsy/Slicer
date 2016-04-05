@@ -126,6 +126,8 @@ void generateLayerCode(CvMat& layer) {
 	CvPoint2D32f center;
 	//static float length=0; 记录总长度
 	float radius,maxRadius,minRadius;
+	int printedPoints=0;
+	vector<string> layercode;
 	//bool flag = false;
 	bool newradius = true;
 	string temp_code;
@@ -140,6 +142,7 @@ void generateLayerCode(CvMat& layer) {
 			testedpoint.x = radius*cos(deg2rad(angle));
 			testedpoint.y = radius*sin(deg2rad(angle));
 			if (cvPointPolygonTest(&layer, testedpoint, 1)> -0.01) {//添加判断 如果点列过少不予打印
+				printedPoints++;
 				if (newradius){
 					temp_code = "G1 X" + DoubleToString(radius) + " Y" + DoubleToString(deg2rad(angle));
 					//length+=angle*=radius;
@@ -149,6 +152,10 @@ void generateLayerCode(CvMat& layer) {
 					temp_code = "G1 Y" + DoubleToString(deg2rad(angle));
 				}
 				code.push_back(temp_code);
+			}
+			else {
+				printedPoints = 0;
+				newradius = true;
 			}
 		}
 		radius -= LENGTHPRECISION; //中心点
