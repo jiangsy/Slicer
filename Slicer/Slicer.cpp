@@ -151,12 +151,22 @@ void generateLayerCode(CvMat& layer) {
 				else{
 					temp_code = "G1 Y" + DoubleToString(deg2rad(angle));
 				}
-				code.push_back(temp_code);
+				layercode.push_back(temp_code);
 			}
 			else {
+				if (layercode.size >= 3) {
+					for (int i = 0; i < layercode.size(); i++)
+						code.push_back(layercode[i]);
+				}
+				layercode.clear();
 				printedPoints = 0;
 				newradius = true;
 			}
+			if (layercode.size >= 3) {
+				for (int i = 0; i < layercode.size(); i++)
+					code.push_back(layercode[i]);
+			}
+			layercode.clear();
 		}
 		radius -= LENGTHPRECISION; //ÖÐÐÄµã
 		newradius = true;
