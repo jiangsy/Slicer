@@ -91,6 +91,7 @@ void toLayer(vector<CvPoint3D32f>& pt) {
 		CvMat mat = cvMat(rawlayerdata[i].size(), 2, CV_32FC1, &rawlayerdata[i][0]);
 		layerdata.push_back(mat);
 	}
+	pt.clear();
 }
 
 void recentralize() {
@@ -162,12 +163,12 @@ void generateLayerCode(CvMat& layer) {
 				printedPoints = 0;
 				newradius = true;
 			}
-			if (layercode.size >= 3) {
-				for (int i = 0; i < layercode.size(); i++)
-					code.push_back(layercode[i]);
-			}
-			layercode.clear();
 		}
+		if (layercode.size >= 3) {
+			for (int i = 0; i < layercode.size(); i++)
+				code.push_back(layercode[i]);
+		}
+		layercode.clear();
 		radius -= LENGTHPRECISION; //ÖÐÐÄµã
 		newradius = true;
 	}
