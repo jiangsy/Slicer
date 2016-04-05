@@ -28,7 +28,7 @@ vector<string> code;
 
 
 //
-	//逐层打印->逐半径打印
+//逐层打印->逐半径打印
 
 ostream& operator<<(ostream& out, CvPoint3D32f& pt) {
 	out << "(" << pt.x << "," << pt.y << "," << pt.z << ")";
@@ -36,7 +36,7 @@ ostream& operator<<(ostream& out, CvPoint3D32f& pt) {
 }
 
 ostream& operator<<(ostream& out, CvPoint2D32f& pt) {
-	out << "(" << pt.x << "," << pt.y << ")" ;
+	out << "(" << pt.x << "," << pt.y << ")";
 	return out;
 }
 
@@ -67,7 +67,7 @@ void generateTime() {
 }
 
 void toLayer(vector<CvPoint3D32f>& pt) {
-	
+
 	if (pt.empty()) return;
 	double currentZ = pt[0].z;
 	int j = -1;
@@ -87,7 +87,7 @@ void toLayer(vector<CvPoint3D32f>& pt) {
 	}
 	rawlayerdata.push_back(temp);
 	height.push_back(currentZ);
-	for (int i = 0; i < rawlayerdata.size(); i++){
+	for (int i = 0; i < rawlayerdata.size(); i++) {
 		CvMat mat = cvMat(rawlayerdata[i].size(), 2, CV_32FC1, &rawlayerdata[i][0]);
 		layerdata.push_back(mat);
 	}
@@ -125,9 +125,7 @@ void recentralize() {
 void generateLayerCode(CvMat& layer) {
 	CvPoint2D32f center;
 	//static float length=0; 记录总长度
-	float radius,maxRadius,minRadius;
-	int printedPoints=0;
-	vector<string> layercode;
+	float radius, maxRadius, minRadius;
 	//bool flag = false;
 	bool newradius = true;
 	string temp_code;
@@ -135,38 +133,23 @@ void generateLayerCode(CvMat& layer) {
 	maxRadius = radius + sqrt(center.x*center.x + center.y*center.y);
 	minRadius = sqrt(center.x*center.x + center.y*center.y) - radius;
 	radius = maxRadius;
-	while (radius >= max((float)0,minRadius)) {
+	while (radius >= max((float)0, minRadius)) {
 		for (float angle = 0; angle < 360; angle += ANGLEPRECISION)
 		{
 			CvPoint2D32f testedpoint;
 			testedpoint.x = radius*cos(deg2rad(angle));
 			testedpoint.y = radius*sin(deg2rad(angle));
 			if (cvPointPolygonTest(&layer, testedpoint, 1)> -0.01) {//添加判断 如果点列过少不予打印
-				printedPoints++;
-				if (newradius){
+				if (newradius) {
 					temp_code = "G1 X" + DoubleToString(radius) + " Y" + DoubleToString(deg2rad(angle));
 					//length+=angle*=radius;
 					newradius = false;
 				}
-				else{
+				else {
 					temp_code = "G1 Y" + DoubleToString(deg2rad(angle));
 				}
-				layercode.push_back(temp_code);
+				code.push_back(temp_code);
 			}
-			else {
-				if (layercode.size >= 3) {
-					for (int i = 0; i < layercode.size(); i++)
-						code.push_back(layercode[i]);
-				}
-				layercode.clear();
-				printedPoints = 0;
-				newradius = true;
-			}
-			if (layercode.size >= 3) {
-				for (int i = 0; i < layercode.size(); i++)
-					code.push_back(layercode[i]);
-			}
-			layercode.clear();
 		}
 		radius -= LENGTHPRECISION; //中心点
 		newradius = true;
@@ -178,7 +161,7 @@ void generateCode() {
 	generateTime();
 	string temp_code;
 	for (int i = 0; i < layerdata.size(); i++) {
-		temp_code ="G1 X" + DoubleToString(0) + " Y" + DoubleToString(0) + " Z" + DoubleToString(height[i]);
+		temp_code = "G1 X" + DoubleToString(0) + " Y" + DoubleToString(0) + " Z" + DoubleToString(height[i]);
 		code.push_back(temp_code);
 		generateLayerCode(layerdata[i]);
 	}
@@ -199,17 +182,17 @@ bool input(string filename, vector<CvPoint3D32f>& vec) {
 	return true;
 }
 
-bool output(string filename,vector<string>& code){
+bool output(string filename, vector<string>& code) {
 	ofstream outFile;
 	string newfilename(filename, 0, filename.size() - 4);
 	newfilename = newfilename + ".gcode";
 	outFile.open(newfilename);
 	if (outFile.fail())
 		return false;
-	for (int i = 0; i < code.size(); i++){
+	for (int i = 0; i < code.size(); i++) {
 		outFile << code[i] << endl;
 	}
-	return true;	
+	return true;
 }
 
 
@@ -219,7 +202,7 @@ int main() {
 	ofstream outFile;
 	string filename;
 	cin >> filename;
-	if(!input(filename,rawpoints)) return -1;
+	if (!input(filename, rawpoints)) return -1;
 	toLayer(rawpoints);
 	recentralize();
 	generateCode();
