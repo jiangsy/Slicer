@@ -155,7 +155,7 @@ void generateLayerCode(CvMat& layer) {
 				layercode.push_back(temp_code);
 			}
 			else {
-				if (layercode.size >= 3) {
+				if (layercode.size() >= 3) {
 					for (int i = 0; i < layercode.size(); i++)
 						code.push_back(layercode[i]);
 				}
@@ -164,7 +164,7 @@ void generateLayerCode(CvMat& layer) {
 				newradius = true;
 			}
 		}
-		if (layercode.size >= 3) {
+		if (layercode.size() >= 3) {
 			for (int i = 0; i < layercode.size(); i++)
 				code.push_back(layercode[i]);
 		}
