@@ -1,5 +1,6 @@
 #define LENGTHPRECISION 0.01
 #define ANGLEPRECISION 0.25
+#define MINIMUMPRINTEDPOINTS 3
 #define _USE_MATH_DEFINES
 #define _CRT_SECURE_NO_WARNINGS
 #include <fstream>
@@ -155,7 +156,7 @@ void generateLayerCode(CvMat& layer) {
 				layercode.push_back(temp_code);
 			}
 			else {
-				if (layercode.size() >= 3) {
+				if (layercode.size() >= MINIMUMPRINTEDPOINTS) {
 					for (int i = 0; i < layercode.size(); i++)
 						code.push_back(layercode[i]);
 				}
@@ -164,7 +165,7 @@ void generateLayerCode(CvMat& layer) {
 				newradius = true;
 			}
 		}
-		if (layercode.size() >= 3) {
+		if (layercode.size() >= MINIMUMPRINTEDPOINTS) {
 			for (int i = 0; i < layercode.size(); i++)
 				code.push_back(layercode[i]);
 		}
