@@ -1,4 +1,4 @@
-#define LENGTHPRECISION 0.1
+#define LENGTHPRECISION 0.4
 #define ANGLEPRECISION 0.2
 #define MINIMUMPRINTEDPOINTS 3
 #define LAYERHEIGHT 0.3
@@ -24,18 +24,14 @@ vector<string> code;
 float length = 0;
 
 //默认输入元素按z的大小排序->添加排序
-	//默认z间隔相同
+	//默认z间隔相同 ->添加线性插值
 //默认同一层z完全一致->精度转换
 //尚未添加填充参数(非全满填充 etc.)
 //尚未根据半径变化修改打印速度
-//部分gcode未添加
 //未考虑上下两层overlap的程度
 //精度float->(double)
 //判断精度与代码输出精度分离；
 
-
-//
-//逐层打印->逐半径打印
 void print() {
 	for (int i = 0; i < code.size(); i++) {
 		outFile << code[i] << endl;
@@ -203,9 +199,28 @@ void generateLayerCode(CvMat& layer) {
 	}
 }
 
+void generateInit() {
+	code.push_back("G21; set units to millimeters");
+	code.push_back("M107");
+	code.push_back("M104 S200; set temperature");
+	code.push_back("G92 X0 Y0");
+	code.push_back("G28 Z");
+	code.push_back("G1 Z10");
+	code.push_back("G28 X");
+	code.push_back("G28 Z");
+	code.push_back("G1 Z4.8; Z axis set zero");
+	code.push_back("G92 Z0");
+	code.push_back("M109 S200; wait for temperature to be reached");
+	code.push_back("G90; use absolute coordinates");
+	code.push_back("M82; use absolute distances for extrusion");
+	code.push_back("G0 X94");
+	code.push_back("G92 E0 X0; X axis set zero");
+}
+
 void generateCode() {
 	//添加开始、停止打印代码
 	generateTime();
+	generateInit();
 	string temp_code;
 	for (int i = 0; i < layerdata.size(); i++) {
 		temp_code = "G1 X" + DoubleToString(0) + " Y" + DoubleToString(0) + " Z" + DoubleToString(height[i]);
