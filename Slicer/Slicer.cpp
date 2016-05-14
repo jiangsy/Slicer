@@ -1,6 +1,7 @@
-#define LENGTHPRECISION 0.01
-#define ANGLEPRECISION 0.25
+#define LENGTHPRECISION 0.1
+#define ANGLEPRECISION 0.2
 #define MINIMUMPRINTEDPOINTS 3
+#define LAYERHEIGHT 0.3
 #define _USE_MATH_DEFINES
 #define _CRT_SECURE_NO_WARNINGS
 #include <fstream>
@@ -11,14 +12,19 @@
 #include <ctime>
 #include <cv.h>
 
+
 using namespace std;
 
+string filename;
+ofstream outFile;
 vector<CvMat> layerdata;
 vector<vector<CvPoint2D32f>> rawlayerdata;
 vector<float> height;
 vector<string> code;
+float length = 0;
 
 //默认输入元素按z的大小排序->添加排序
+	//默认z间隔相同
 //默认同一层z完全一致->精度转换
 //尚未添加填充参数(非全满填充 etc.)
 //尚未根据半径变化修改打印速度
@@ -30,6 +36,11 @@ vector<string> code;
 
 //
 //逐层打印->逐半径打印
+void print() {
+	for (int i = 0; i < code.size(); i++) {
+		outFile << code[i] << endl;
+	}
+}
 
 ostream& operator<<(ostream& out, CvPoint3D32f& pt) {
 	out << "(" << pt.x << "," << pt.y << "," << pt.z << ")";
@@ -51,6 +62,16 @@ string DoubleToString(double d)
 	string str;
 	stringstream ss;
 	ss << d;
+	ss >> str;
+	return str;
+}
+
+string IntToString(int i)
+{
+	using namespace std;
+	string str;
+	stringstream ss;
+	ss << i;
 	ss >> str;
 	return str;
 }
@@ -96,6 +117,7 @@ void toLayer(vector<CvPoint3D32f>& pt) {
 }
 
 void recentralize() {
+
 	CvBox2D temp_rect;
 	CvPoint2D32f center(0, 0);
 	int count = 0;
@@ -126,7 +148,7 @@ void recentralize() {
 
 void generateLayerCode(CvMat& layer) {
 	CvPoint2D32f center;
-	//static float length=0; 记录总长度
+	//float layerLength = 0;
 	float radius, maxRadius, minRadius;
 	int printedPoints = 0;
 	vector<string> layercode;
@@ -146,19 +168,22 @@ void generateLayerCode(CvMat& layer) {
 			if (cvPointPolygonTest(&layer, testedpoint, 1)> -0.01) {//添加判断 如果点列过少不予打印
 				printedPoints++;
 				if (newradius) {
-					temp_code = "G1 X" + DoubleToString(radius) + " Y" + DoubleToString(deg2rad(angle));
-					//length+=angle*=radius;
+					temp_code = "G1 X" + DoubleToString(radius) + " Y" + DoubleToString(angle) + " E" + DoubleToString(length*LAYERHEIGHT)+ " F"+ IntToString(1500);
 					newradius = false;
 				}
 				else {
-					temp_code = "G1 Y" + DoubleToString(deg2rad(angle));
+					temp_code = "G1 Y" + DoubleToString(angle)+" E" + DoubleToString(length*LAYERHEIGHT);
 				}
 				layercode.push_back(temp_code);
 			}
 			else {
 				if (layercode.size() >= MINIMUMPRINTEDPOINTS) {
-					for (int i = 0; i < layercode.size(); i++)
-						code.push_back(layercode[i]);
+					for (int i = 0; i < layercode.size(); i++) {
+						length += radius*ANGLEPRECISION;
+						
+					}
+					code.push_back(layercode[0]);
+					code.push_back(layercode[layercode.size()-1]);
 				}
 				layercode.clear();
 				printedPoints = 0;
@@ -166,8 +191,11 @@ void generateLayerCode(CvMat& layer) {
 			}
 		}
 		if (layercode.size() >= MINIMUMPRINTEDPOINTS) {
-			for (int i = 0; i < layercode.size(); i++)
-				code.push_back(layercode[i]);
+			for (int i = 0; i < layercode.size(); i++) {
+				length += radius*ANGLEPRECISION;
+			}
+			code.push_back(layercode[0]);
+			code.push_back(layercode[layercode.size() - 1]);
 		}
 		layercode.clear();
 		radius -= LENGTHPRECISION; //中心点
@@ -183,6 +211,8 @@ void generateCode() {
 		temp_code = "G1 X" + DoubleToString(0) + " Y" + DoubleToString(0) + " Z" + DoubleToString(height[i]);
 		code.push_back(temp_code);
 		generateLayerCode(layerdata[i]);
+		print();
+		code.clear();
 	}
 }
 
@@ -201,16 +231,13 @@ bool input(string filename, vector<CvPoint3D32f>& vec) {
 	return true;
 }
 
-bool output(string filename, vector<string>& code) {
-	ofstream outFile;
+bool output(string filename) {
+	
 	string newfilename(filename, 0, filename.size() - 4);
 	newfilename = newfilename + ".gcode";
 	outFile.open(newfilename);
 	if (outFile.fail())
 		return false;
-	for (int i = 0; i < code.size(); i++) {
-		outFile << code[i] << endl;
-	}
 	return true;
 }
 
@@ -218,13 +245,12 @@ bool output(string filename, vector<string>& code) {
 
 int main() {
 	vector<CvPoint3D32f> rawpoints;
-	ofstream outFile;
-	string filename;
 	cin >> filename;
 	if (!input(filename, rawpoints)) return -1;
+	if (!output(filename)) return -1;
 	toLayer(rawpoints);
 	recentralize();
 	generateCode();
-	if (!output(filename, code)) return -1;
+	outFile.close();
 	return 0;
 }
